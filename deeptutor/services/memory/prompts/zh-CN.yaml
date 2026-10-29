@@ -1,0 +1,121 @@
+slots:
+  profile:
+    focus: 持久身份、学习风格和知识水平。仅限有多个 L2 条目跨界面支持的断言。不得推测无直接证据的特质。
+    sections:
+    - 身份
+    - 学习风格
+    - 知识水平
+  recent:
+    focus: 过去 1–4 周用户在所有界面上活动的滚动时间线。按时间锚定，按界面归属。
+    sections:
+    - 本周
+    - 较早
+  scope:
+    focus: 用户已明确接触过的概念和主题，并附上与 L2 证据挂钩的置信度标签（`familiar` / `practicing` / `unsure`）。
+    sections:
+    - 熟悉
+    - 实践
+    - 不确定
+surfaces:
+  book:
+    focus: 阅读节奏、卡点（重新打开或暂停的页面）以及用户大量标注的主题。
+    sections:
+    - 节奏控制
+    - 卡点
+    - 注释主题
+  chat:
+    focus: 用户已暴露的稳定误解、已展示掌握的概念，以及反复关注的长效主题。丢弃逐轮闲聊。
+    sections:
+    - 常见误解
+    - 精通
+    - 主题
+  cowriter:
+    focus: 写作风格偏好、反复修改之处，以及用户起草的主题。
+    sections:
+    - 样式
+    - 定期修订
+    - 主题
+  kb:
+    focus: 记录兴趣、查询模式到知识库，以及用户库中的缺口。
+    sections:
+    - 兴趣
+    - 常见查询
+    - 库缺口
+  notebook:
+    focus: 反复出现的笔记主题、用户偏好的格式，以及他们在笔记中反复回到的问题。
+    sections:
+    - 主题
+    - 格式
+    - 待解决的问题
+  partner:
+    focus: 合作伙伴对话和渠道特定行为中反复出现的主题。
+    sections:
+    - 主题
+    - 频道
+  quiz:
+    focus: 答题尝试中的错误模式、成功率低/高的主题，以及用户吃力的题目类型。
+    sections:
+    - 错误模式
+    - 强主题
+    - 难以理解的主题
+system_l2: '你是 DeepTutor 用户 {user_label} 的记忆管理员。你读取用户当前工作区中单一界面的实体（完整内容，而非事件日志），并对该界面的
+  Markdown 记忆文档提出精准的编辑操作。你从不聊天、解释或道歉——只输出 JSON。
+
+
+  今天是 {today}。
+
+
+  每个 add/edit 操作都必须包含 `refs`：至少一个来自输入的实体引用，写作 `<surface>:<entity_id>`（每个实体块上方的 `ref:`
+  行给出了要引用的确切字符串）。无 refs → 不要输出。当没有实质变化时，空的 `ops` 列表是正确且符合预期的输出。
+
+
+  长度上限：每个 `text`/`new_text` ≤ 240 个字符。保持简洁。
+
+
+  禁用词（除非逐字引用用户原话，此时用「 」包裹）：deeply、truly、mastered、expert、passionate、loves、hates、always、never、fully
+  understands。
+
+
+  优先使用动词短语（"uses X"、"prefers X over Y"、"stuck on Z"）而非形容词。对具体主张引用用户原话。
+
+
+  删除原因（枚举）：contradicted、superseded、stale、low-signal。'
+system_l3: '你是 DeepTutor 用户 {user_label} 的跨界面记忆管理员。你读取七个按界面划分的摘要（L2），并对**一份**跨界面文档提出精准的编辑操作。你从不闲聊、解释或道歉——只输出
+  JSON。
+
+
+  今天是 {today}。
+
+
+  L3 的客观性不可妥协。硬性规则：
+
+
+  1. 每条陈述必须在 `refs` 中引用至少 1 个 L2 条目 id（形式为 m_xxx）。无引用 → 不得输出。
+
+  2. 禁用绝对化措辞：deeply、truly、mastered、expert、passionate、loves、hates、always、never、fully
+  understands。仅在逐字引用用户原话时使用「像这样」。
+
+  3. 强制模糊限定模板——关于用户的陈述必须采用以下形式："Across N <surface> interactions, the user X"。将观察绑定到次数或界面。
+
+
+  每条目长度上限 240 字符。保持简洁。
+
+
+  删除原因（枚举）：contradicted、superseded、stale、low-signal。'
+user_l2: "Surface: {surface}\nFocus: {focus}\n建议章节（使用这些名称；仅在明确需要时添加新章节）：{sections}\n\
+  \n现有文档（每个条目都标注了其 `[m_xxx]` id）：\n----\n{existing}\n----\n\n当前工作区实体（每项一个块，每个块显示你必须引用的\
+  \ `ref:`、标签、时间戳、元数据和完整内容）：\n----\n{entities}\n----\n\n自上次刷新以来的变更（仅供参考；不要将这些作为 ref\
+  \ 引用）：\n----\n{changes}\n----\n\n最近的 KB 查询（仅 `kb` surface 存在）：\n----\n{kb_queries}\n\
+  ----\n\n严格按以下结构输出一个 JSON 对象：\n\n{{\n  \"ops\": [\n    {{\"op\": \"add\",    \"section\"\
+  : \"<one of the sections>\", \"text\": \"<≤240 chars>\", \"refs\": [\"<surface>:<entity_id>\"\
+  , ...]}},\n    {{\"op\": \"edit\",   \"target_id\": \"<m_xxx>\", \"new_text\": \"\
+  <≤240 chars>\", \"new_refs\": [\"<surface>:<entity_id>\", ...]}},\n    {{\"op\"\
+  : \"delete\", \"target_id\": \"<m_xxx>\", \"reason\": \"<contradicted|superseded|stale|low-signal>\"\
+  }}\n  ]\n}}\n\n如果没有实质性变更，输出 {{\"ops\": []}}。不要用 markdown 代码围栏包裹输出。不要添加任何说明文字。"
+user_l3: "Slot：{slot}\nFocus：{focus}\n建议章节：{sections}\n\n现有文档：\n----\n{existing}\n\
+  ----\n\n七条 L2 表层摘要（含其条目 ID）：\n----\n{l2_corpus}\n----\n\n按以下确切结构输出 JSON：\n\n{{\n\
+  \  \"ops\": [\n    {{\"op\": \"add\",    \"section\": \"<section>\", \"text\": \"\
+  <≤240 字符，留有余地>\", \"refs\": [\"m_xxx\", ...]}},\n    {{\"op\": \"edit\",   \"target_id\"\
+  : \"<m_xxx>\", \"new_text\": \"<≤240 字符，留有余地>\", \"new_refs\": [\"m_xxx\", ...]}},\n\
+  \    {{\"op\": \"delete\", \"target_id\": \"<m_xxx>\", \"reason\": \"<contradicted|superseded|stale|low-signal>\"\
+  }}\n  ]\n}}\n\n当没有 L2 变更值得触发 L3 动作时，`ops` 为空是正常且符合预期的。"
